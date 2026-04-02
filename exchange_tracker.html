@@ -2,544 +2,835 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>달러 환전 트래커</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-:root{--bg:#0e0f11;--bg2:#161719;--bg3:#1e2023;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);--text:#f0f0ee;--text2:#9a9a95;--text3:#5a5a56;--green:#4ade80;--green-dim:rgba(74,222,128,0.12);--red:#f87171;--red-dim:rgba(248,113,113,0.12);--amber:#fbbf24;--amber-dim:rgba(251,191,36,0.12);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.12);--accent:#e8ff57;--radius:12px;--radius-sm:8px;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
-.app{max-width:1100px;margin:0 auto;padding:2rem 1.5rem;}
-.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;}
-.header-left h1{font-size:20px;font-weight:700;letter-spacing:-0.03em;}
-.header-left p{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;}
-.rate-hero{text-align:right;}
-.rate-num{font-family:'DM Mono',monospace;font-size:34px;font-weight:500;line-height:1;}
-.rate-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;}
-.rate-badge{display:inline-block;font-size:10px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:20px;margin-top:5px;font-weight:500;}
-.badge-danger{background:var(--red-dim);color:var(--red);}
-.badge-warn{background:var(--amber-dim);color:var(--amber);}
-.badge-ok{background:var(--green-dim);color:var(--green);}
-.btn-refresh{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-family:'DM Mono',monospace;transition:all .2s;margin-top:6px;}
-.btn-refresh:hover{background:var(--bg3);color:var(--text);}
-.manual-link{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;cursor:pointer;text-decoration:underline;display:block;margin-top:3px;text-align:right;}
-.tabs{display:flex;border-bottom:0.5px solid var(--border);margin-bottom:1.25rem;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.tabs::-webkit-scrollbar{display:none;}
-.tab-btn{padding:8px 14px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text3);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;margin-bottom:-0.5px;font-family:'Noto Sans KR',sans-serif;transition:all .15s;}
-.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
-.tab-panel{display:none;}
-.tab-panel.active{display:block;}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.875rem;margin-bottom:.875rem;}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.875rem;}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:.875rem;}
-.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.125rem;margin-bottom:.875rem;}
-.card-title{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between;}
-.metric{background:var(--bg3);border-radius:var(--radius-sm);padding:.625rem .875rem;}
-.metric-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:5px;}
-.metric-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--text);line-height:1;}
-.metric-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;}
-.progress-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:6px;}
-.progress-fill{height:100%;border-radius:3px;transition:width .5s ease;}
-.progress-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px;}
-.alert-bar{display:flex;align-items:center;gap:8px;padding:.625rem .875rem;border-radius:var(--radius-sm);font-size:12px;margin-bottom:.875rem;border:0.5px solid;}
-.alert-green{background:var(--green-dim);border-color:rgba(74,222,128,.2);color:var(--green);}
-.alert-amber{background:var(--amber-dim);border-color:rgba(251,191,36,.2);color:var(--amber);}
-.alert-red{background:var(--red-dim);border-color:rgba(248,113,113,.2);color:var(--red);}
-.alert-blue{background:var(--blue-dim);border-color:rgba(96,165,250,.2);color:var(--blue);}
-.tranche-item{display:flex;align-items:center;gap:10px;padding:.625rem 0;border-bottom:0.5px solid var(--border);}
-.tranche-item:last-child{border-bottom:none;}
-.tranche-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;min-width:28px;text-align:center;}
-.tranche-info{flex:1;}
-.tranche-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
-.tranche-desc{font-size:10px;color:var(--text3);margin-top:1px;}
-.tranche-right{text-align:right;}
-.tranche-usd{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--green);}
-.tranche-won{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
-.event-item{display:flex;gap:10px;align-items:flex-start;padding:.625rem 0;border-bottom:0.5px solid var(--border);cursor:pointer;}
-.event-item:last-child{border-bottom:none;}
-.event-check{width:15px;height:15px;border-radius:4px;border:0.5px solid var(--border2);background:var(--bg3);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#000;}
-.event-check.checked{background:var(--green);border-color:var(--green);}
-.event-name{font-size:12px;font-weight:500;}
-.event-desc{font-size:10px;color:var(--text3);margin-top:1px;}
-.event-impact{font-size:10px;font-family:'DM Mono',monospace;margin-top:3px;}
-.sum-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;}
-.sum-label{color:var(--text3);font-family:'DM Mono',monospace;}
-.sum-val{color:var(--text);font-family:'DM Mono',monospace;font-weight:500;}
-.sum-row.total{padding-top:10px;border-top:0.5px solid var(--border);}
-.sum-row.total .sum-label{font-size:13px;color:var(--text2);}
-.sum-row.total .sum-val{font-size:15px;color:var(--accent);}
-hr.divider{border:none;border-top:0.5px solid var(--border);margin:.75rem 0;}
-.input-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.06em;}
-input[type=number],input[type=text],input[type=date]{width:100%;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none;transition:border-color .2s;}
-input:focus{border-color:var(--accent);}
-input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;}
-.btn{padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
-.btn-primary{background:var(--accent);color:#000;}
-.btn-primary:hover{background:#d4eb4f;}
-.btn-ghost{background:transparent;color:var(--text2);border:0.5px solid var(--border2);}
-.btn-ghost:hover{background:var(--bg3);}
-.btn-danger{background:var(--red-dim);color:var(--red);border:0.5px solid rgba(248,113,113,.2);}
-.btn-sm{padding:5px 10px;font-size:11px;}
-.record-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.record-table{width:100%;border-collapse:collapse;min-width:440px;}
-.record-table th{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-align:left;padding:0 8px 6px 0;border-bottom:0.5px solid var(--border);font-weight:400;}
-.record-table td{font-size:11px;padding:8px 8px 8px 0;border-bottom:0.5px solid var(--border);font-family:'DM Mono',monospace;color:var(--text2);vertical-align:middle;}
-.record-table tr:last-child td{border-bottom:none;}
-.td-date{color:var(--text3)!important;}
-.td-rate{color:var(--blue)!important;}
-.td-usd{color:var(--green)!important;font-weight:500;}
-.chart-wrap{position:relative;height:190px;margin:.5rem 0;}
-.src-badge{font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:10px;}
-.empty-state{text-align:center;padding:1.5rem 0;color:var(--text3);font-size:12px;font-family:'DM Mono',monospace;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.spinning{display:inline-block;animation:spin 1s linear infinite;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
-.fade-in{animation:fadeIn .3s ease;}
-@media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr;}.grid4{grid-template-columns:1fr 1fr;}}
-@media(max-width:480px){
-  .app{padding:.875rem .75rem;}
-  .header{flex-direction:column;gap:.5rem;margin-bottom:1rem;}
-  .header-left h1{font-size:17px;}
-  .rate-hero{text-align:left;}
-  .rate-num{font-size:26px;}
-  .grid2,.grid3{grid-template-columns:1fr;gap:.625rem;}
-  .grid4{grid-template-columns:1fr 1fr;gap:.5rem;}
-  .card{padding:.875rem;}
-  .metric-val{font-size:15px!important;}
-  .chart-wrap{height:150px;}
-  .tab-btn{padding:7px 10px;font-size:11px;}
-  input[type=number],input[type=text],input[type=date]{font-size:15px;padding:10px 12px;}
-  .grid3{grid-template-columns:1fr;}
-  #tab-strategy .grid2,#tab-settings .grid2{grid-template-columns:1fr;}
+:root {
+  --bg:#0e0f11; --bg2:#161719; --bg3:#1e2023;
+  --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.14);
+  --text:#f0f0ee; --text2:#9a9a95; --text3:#5a5a56;
+  --green:#4ade80; --green-d:rgba(74,222,128,0.12);
+  --red:#f87171;   --red-d:rgba(248,113,113,0.12);
+  --amber:#fbbf24; --amber-d:rgba(251,191,36,0.12);
+  --blue:#60a5fa;  --blue-d:rgba(96,165,250,0.12);
+  --accent:#e8ff57;
+  --r:12px; --rs:8px;
 }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+.mono{font-family:'DM Mono',monospace;}
+.app{max-width:680px;margin:0 auto;padding:1rem 0.875rem;}
+
+/* Header */
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;gap:.75rem;flex-wrap:wrap;}
+.hdr-l h1{font-size:18px;font-weight:700;letter-spacing:-.03em;}
+.hdr-l p{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;}
+.hdr-l .ma20txt{font-size:10px;color:var(--blue);font-family:'DM Mono',monospace;margin-top:2px;}
+.hdr-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.rate-num{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;line-height:1;}
+.rate-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;}
+.badge{display:inline-block;font-size:10px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:20px;font-weight:500;}
+.badge-r{background:var(--red-d);color:var(--red);}
+.badge-a{background:var(--amber-d);color:var(--amber);}
+.badge-g{background:var(--green-d);color:var(--green);}
+.btn-hdr{display:flex;align-items:center;gap:5px;padding:5px 10px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);border-radius:var(--rs);cursor:pointer;font-size:11px;font-family:'DM Mono',monospace;}
+.btn-hdr:hover{background:var(--bg3);color:var(--text);}
+.btn-hdr.accent{border-color:rgba(232,255,87,.3);color:var(--accent);}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:.5px solid var(--border);margin-bottom:1.25rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:7px 12px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text3);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* Card */
+.card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:1rem 1.125rem;margin-bottom:.75rem;}
+.ctitle{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.875rem;display:flex;justify-content:space-between;align-items:center;}
+.ctitle span{color:var(--text3);}
+
+/* Grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.5rem;margin-bottom:.75rem;}
+@media(max-width:480px){.g4{grid-template-columns:1fr 1fr;}}
+
+/* Metric */
+.metric{background:var(--bg3);border-radius:var(--rs);padding:.625rem .875rem;}
+.mlabel{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:5px;}
+.mval{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;line-height:1;}
+.msub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;}
+
+/* Alert */
+.alert{display:flex;gap:8px;align-items:flex-start;padding:.625rem .875rem;border-radius:var(--rs);font-size:11px;margin-bottom:.875rem;border:.5px solid;}
+.alert-r{background:var(--red-d);border-color:rgba(248,113,113,.2);color:var(--red);}
+.alert-a{background:var(--amber-d);border-color:rgba(251,191,36,.2);color:var(--amber);}
+.alert-g{background:var(--green-d);border-color:rgba(74,222,128,.2);color:var(--green);}
+
+/* Progress */
+.pbar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:6px;}
+.pfill{height:100%;border-radius:3px;transition:width .5s;}
+.plabel{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px;}
+
+/* Event list */
+.evt{display:flex;gap:10px;align-items:flex-start;padding:.625rem 0;border-bottom:.5px solid var(--border);cursor:pointer;}
+.evt:last-child{border-bottom:none;}
+.chk{width:16px;height:16px;border-radius:4px;border:.5px solid var(--border2);background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:10px;font-weight:700;color:#000;}
+.chk.on{background:var(--green);border-color:var(--green);}
+.ename{font-size:12px;font-weight:500;color:var(--text);}
+.edesc{font-size:10px;color:var(--text3);margin-top:1px;}
+.eimpact{font-size:10px;font-family:'DM Mono',monospace;margin-top:3px;}
+
+/* Tranche */
+.tr{display:flex;gap:10px;align-items:center;padding:.625rem 0;border-bottom:.5px solid var(--border);}
+.tr:last-child{border-bottom:none;}
+.tr-num{width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:'DM Mono',monospace;flex-shrink:0;}
+.tr-info{flex:1;}
+.tr-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+.tr-desc{font-size:10px;color:var(--text3);margin-top:1px;}
+.tr-r{text-align:right;}
+.tr-usd{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+.tr-won{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
+.minibar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:4px;}
+.minifill{height:100%;border-radius:2px;}
+
+/* Divider */
+hr{border:none;border-top:.5px solid var(--border);margin:.75rem 0;}
+
+/* Sum row */
+.srow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;font-family:'DM Mono',monospace;}
+.srow.tot{padding-top:8px;border-top:.5px solid var(--border);}
+.srow .sl{color:var(--text3);}
+.srow .sv{font-weight:500;}
+
+/* Chart */
+.chwrap{position:relative;height:160px;margin:.5rem 0;}
+
+/* Input */
+.ilabel{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.06em;}
+input[type=number],input[type=text],input[type=date]{width:100%;background:var(--bg3);border:.5px solid var(--border2);border-radius:var(--rs);padding:9px 11px;color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;}
+input:focus{border-color:var(--accent);}
+input[type=range]{width:100%;accent-color:var(--accent);}
+.btn{padding:9px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'Noto Sans KR',sans-serif;}
+.btn-p{background:var(--accent);color:#000;}
+.btn-g{background:transparent;color:var(--text2);border:.5px solid var(--border2);}
+.btn-d{background:var(--red-d);color:var(--red);border:.5px solid rgba(248,113,113,.2);font-size:11px;padding:4px 8px;}
+
+/* Record table */
+.rtable{width:100%;border-collapse:collapse;min-width:400px;}
+.rtable th{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-align:left;padding-bottom:6px;border-bottom:.5px solid var(--border);font-weight:400;}
+.rtable td{font-size:11px;padding:8px 6px 8px 0;border-bottom:.5px solid var(--border);font-family:'DM Mono',monospace;color:var(--text2);}
+.rtable tr:last-child td{border-bottom:none;}
+.td-date{color:var(--text3) !important;}
+.td-rate{color:var(--blue) !important;}
+.td-usd{color:var(--green) !important;font-weight:500;}
+.td-src-api{color:var(--blue) !important;font-size:10px;}
+.td-src-manual{color:var(--amber) !important;font-size:10px;}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+/* Empty */
+.empty{text-align:center;padding:1.5rem 0;font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:1rem;}
+.modal{background:var(--bg3);border:.5px solid var(--border2);border-radius:16px;padding:1.25rem;width:100%;max-width:320px;}
+.modal h2{font-size:14px;font-weight:600;margin-bottom:4px;}
+.modal p{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.7;margin-bottom:1rem;}
+.modal input{font-size:22px;font-weight:500;padding:10px 12px;margin-bottom:1rem;}
+.modal .btns{display:flex;gap:8px;}
+.modal .hint{margin-top:.875rem;padding:.625rem .75rem;background:var(--bg);border-radius:8px;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.9;}
+
+/* Spin */
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin{display:inline-block;animation:spin 1s linear infinite;}
 </style>
 </head>
 <body>
 <div class="app">
 
-<div class="header">
-  <div class="header-left">
-    <h1>달러 환전 트래커</h1>
-    <p id="lastUpdate">환율 조회 중...</p>
-    <p id="ma20Display" style="color:var(--blue);margin-top:2px;font-family:'DM Mono',monospace;font-size:11px;">MA20 계산 중...</p>
-  </div>
-  <div class="rate-hero">
-    <div class="rate-num" id="heroRate">—</div>
-    <div class="rate-sub">USD/KRW</div>
-    <div id="heroBadge"></div>
-    <button class="btn-refresh" onclick="doRefresh()"><span id="refreshIcon">⟳</span> 새로고침</button>
-    <span class="manual-link" onclick="showRateInput()">수동 입력</span>
-  </div>
-</div>
-
-<div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('dashboard',this)">대시보드</button>
-  <button class="tab-btn" onclick="switchTab('strategy',this)">매수 전략</button>
-  <button class="tab-btn" onclick="switchTab('records',this)">환전 기록</button>
-  <button class="tab-btn" onclick="switchTab('settings',this)">설정</button>
-</div>
-
-<div class="tab-panel active" id="tab-dashboard">
-  <div id="alertArea"></div>
-  <div class="grid4" id="kpiGrid"></div>
-  <div class="card"><div class="card-title">목표 달러 달성률</div><div id="goalProgress"></div></div>
-  <div class="grid2">
-    <div class="card"><div class="card-title">환율 추이 & MA20</div><div class="chart-wrap"><canvas id="rateChart"></canvas></div></div>
-    <div class="card"><div class="card-title">이벤트 트리거 체크리스트</div><div id="eventListDash"></div></div>
-  </div>
-</div>
-
-<div class="tab-panel" id="tab-strategy">
-  <div class="grid2">
-    <div class="card"><div class="card-title">2단계 — 이벤트 트리거 <span style="color:var(--blue);font-size:10px;">예산 50%</span></div><div id="strategy2Detail"></div></div>
-    <div class="card"><div class="card-title">3단계 — MA20 분할 매수 <span style="color:var(--green);font-size:10px;">예산 50%</span></div><div id="strategy3Detail"></div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">전략 시뮬레이션 요약</div>
-    <div class="grid2">
-      <div class="chart-wrap" style="height:170px;"><canvas id="stratChart"></canvas></div>
-      <div id="stratSummary"></div>
+  <!-- Header -->
+  <div class="hdr">
+    <div class="hdr-l">
+      <h1>달러 환전 트래커</h1>
+      <p id="lastUpdate">환율 조회 중...</p>
+      <p class="ma20txt" id="ma20txt">MA20: —</p>
+    </div>
+    <div class="hdr-r">
+      <div>
+        <div class="rate-num" id="heroRate">—</div>
+        <div class="rate-sub">원 / USD</div>
+        <div id="heroBadge" style="margin-top:4px;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <button class="btn-hdr" onclick="fetchRate()" title="API 자동 갱신">
+          <span id="refreshIcon">↻</span> 갱신
+        </button>
+        <button class="btn-hdr accent" onclick="showRateModal()">✎ 직접 입력</button>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="tab-panel" id="tab-records">
-  <div class="card">
-    <div class="card-title">환전 내역 추가</div>
-    <div class="grid3" style="margin-bottom:.625rem;">
-      <div><label class="input-label">날짜</label><input type="date" id="recDate"></div>
-      <div><label class="input-label">환율 (원)</label><input type="number" id="recRate" placeholder="1480"></div>
-      <div><label class="input-label">금액 (원)</label><input type="number" id="recAmount" placeholder="3000000"></div>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <input type="text" id="recNote" placeholder="메모 (예: 3단계 1구간)" style="flex:1;">
-      <button class="btn btn-primary" onclick="addRecord()">추가</button>
-    </div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab on" onclick="switchTab('dashboard',this)">대시보드</button>
+    <button class="tab" onclick="switchTab('strategy',this)">매수 전략</button>
+    <button class="tab" onclick="switchTab('records',this)">환전 기록</button>
+    <button class="tab" onclick="switchTab('settings',this)">설정</button>
   </div>
-  <div class="card">
-    <div class="card-title">환전 기록 <span id="recCount" style="color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;"></span></div>
-    <div class="record-wrap"><div id="recordsTable"></div></div>
-  </div>
-  <div id="recSummaryCard"></div>
-</div>
 
-<div class="tab-panel" id="tab-settings">
-  <div class="grid2">
+  <!-- Dashboard -->
+  <div id="tab-dashboard">
+    <div id="alertArea"></div>
+    <div class="g4" id="kpiGrid"></div>
     <div class="card">
-      <div class="card-title">기본 설정</div>
-      <div style="margin-bottom:.625rem;"><label class="input-label">총 환전 예산 (원)</label><input type="number" id="setBudget" step="100000"></div>
-      <div style="margin-bottom:.625rem;"><label class="input-label">목표 달러 ($)</label><input type="number" id="setGoal" step="100"></div>
-      <div style="margin-bottom:.625rem;">
-        <label class="input-label">MA20 fallback — 데이터 부족 시 사용</label>
-        <input type="number" id="setMA20" step="1">
-        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px;">3일 이상 API 데이터가 쌓이면 자동 계산값으로 대체됩니다</div>
+      <div class="ctitle">목표 달러 달성률</div>
+      <div id="goalArea"></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="ctitle">환율 추이</div>
+        <div class="chwrap"><canvas id="rateChart"></canvas></div>
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px;">노란선=MA20 · API 자동 수집</div>
       </div>
-      <div style="margin-bottom:.625rem;">
-        <label class="input-label">분할 구간 수 (<span id="trancheVal"></span>)</label>
-        <input type="range" min="2" max="5" step="1" id="setTranches" oninput="document.getElementById('trancheVal').textContent=this.value+'구간'">
+      <div class="card">
+        <div class="ctitle">이벤트 체크리스트</div>
+        <div id="eventList"></div>
       </div>
-      <div style="margin-bottom:.875rem;">
-        <label class="input-label">구간 간격 (<span id="gapVal"></span>)</label>
-        <input type="range" min="10" max="50" step="5" id="setGap" oninput="document.getElementById('gapVal').textContent=this.value+'원'">
+    </div>
+  </div>
+
+  <!-- Strategy -->
+  <div id="tab-strategy" style="display:none;">
+    <div class="g2">
+      <div class="card">
+        <div class="ctitle">2단계 — 이벤트 트리거 <span style="color:var(--blue)">예산 50%</span></div>
+        <div id="strat2"></div>
       </div>
-      <button class="btn btn-primary" style="width:100%;" onclick="saveSettings()">설정 저장</button>
+      <div class="card">
+        <div class="ctitle">3단계 — MA20 분할 매수 <span style="color:var(--green)">예산 50%</span></div>
+        <div id="strat3"></div>
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">알림 조건</div>
-      <div style="margin-bottom:.625rem;"><label class="input-label">2단계 알림 기준 (원 이하)</label><input type="number" id="setAlert2" step="1"></div>
-      <div style="margin-bottom:.875rem;"><label class="input-label">3단계 알림 기준 (원 이하)</label><input type="number" id="setAlert3" step="1"></div>
-      <button class="btn btn-ghost btn-sm" onclick="requestNotif()" style="width:100%;margin-bottom:.5rem;">브라우저 알림 허용</button>
-      <hr class="divider">
-      <div class="card-title" style="margin-top:0;">데이터 관리</div>
+      <div class="ctitle">전략 시뮬레이션</div>
+      <div class="g2">
+        <div class="chwrap" style="height:180px;"><canvas id="stratChart"></canvas></div>
+        <div id="stratSummary"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Records -->
+  <div id="tab-records" style="display:none;">
+    <div class="card">
+      <div class="ctitle">환전 내역 추가</div>
+      <div class="g2" style="margin-bottom:.5rem;">
+        <div><label class="ilabel">날짜</label><input type="date" id="rDate"></div>
+        <div><label class="ilabel">환율 (원)</label><input type="number" id="rRate" placeholder="1480"></div>
+      </div>
+      <div style="margin-bottom:.5rem;"><label class="ilabel">금액 (원)</label><input type="number" id="rAmt" placeholder="3000000"></div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-ghost btn-sm" onclick="exportData()">내보내기</button>
-        <button class="btn btn-danger btn-sm" onclick="resetAll()">전체 초기화</button>
+        <input type="text" id="rNote" placeholder="메모 (예: 3단계 1구간)" style="flex:1;font-size:14px;">
+        <button class="btn btn-p" onclick="addRecord()">추가</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">환전 기록 <span id="recCnt"></span></div>
+      <div id="recTable"></div>
+    </div>
+    <div id="recSummary"></div>
+  </div>
+
+  <!-- Settings -->
+  <div id="tab-settings" style="display:none;">
+    <div class="card">
+      <div class="ctitle">기본 설정</div>
+      <div id="settingsForm"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">환율 히스토리 (MA20 기준) <span id="histCnt"></span></div>
+      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;padding:.625rem .75rem;background:var(--bg3);border-radius:8px;margin-bottom:.875rem;line-height:1.9;">
+        Frankfurter API (ECB 기준) · 앱 시작 시 최근 45일 자동 수집<br>
+        3시간마다 오늘 환율 갱신 · 직접 입력값은 덮어쓰지 않음
+      </div>
+      <div id="histTable"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">데이터 관리</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g" onclick="exportData()" style="font-size:12px;padding:7px 12px;">내보내기</button>
+        <button class="btn" onclick="resetAll()" style="background:var(--red-d);color:var(--red);border:.5px solid rgba(248,113,113,.2);font-size:12px;padding:7px 12px;">초기화</button>
       </div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-title">환율 히스토리 & 날짜별 MA20 <span id="historyCount" style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;"></span></div>
-    <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:.75rem;padding:.625rem .75rem;background:var(--bg3);border-radius:8px;line-height:1.9;">
-      앱 실행 시 오늘 환율을 자동 조회합니다. 처음 실행 시 과거 20일치 데이터도 자동 수집합니다.<br>
-      <span style="color:var(--green);">● 자동</span> = API 자동조회 &nbsp;
-      <span style="color:var(--amber);">● 수동</span> = 직접 입력 &nbsp;
-      <span style="color:var(--text3);">● 과거</span> = 히스토리 수집
-    </div>
-    <div id="rateHistoryTable"></div>
-  </div>
-</div>
 
 </div>
 
-<!-- 수동 입력 모달 -->
-<div id="rateInputModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.72);align-items:center;justify-content:center;padding:1rem;">
-  <div style="background:var(--bg3);border:0.5px solid var(--border2);border-radius:16px;padding:1.375rem;width:100%;max-width:320px;">
-    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;">환율 직접 입력</div>
-    <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:1rem;line-height:1.8;">
-      API 조회 실패 시 또는 더 정확한 값으로 덮어쓸 때<br>
-      <span style="color:var(--blue);">네이버 "달러 환율" / 하나은행 앱 확인</span>
+<!-- Rate Input Modal -->
+<div id="rateModal" class="modal-bg" style="display:none;" onclick="if(event.target===this)hideRateModal()">
+  <div class="modal">
+    <h2>오늘 환율 입력</h2>
+    <p>네이버 "달러 환율" 검색 또는<br>하나은행 앱에서 확인한 값 입력</p>
+    <input type="number" id="modalRate" placeholder="예: 1499">
+    <div class="btns">
+      <button class="btn btn-p" onclick="applyManualRate()" style="flex:1;padding:10px;">저장</button>
+      <button class="btn btn-g" onclick="hideRateModal()" style="padding:10px 14px;">취소</button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;">
-      <input type="number" id="manualRateInput" placeholder="예: 1520" step="1"
-        style="flex:1;font-size:22px;font-family:'DM Mono',monospace;font-weight:500;background:var(--bg);border:0.5px solid rgba(255,255,255,.2);border-radius:10px;padding:11px 13px;color:var(--text);outline:none;">
-      <span style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap;">원/$</span>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="applyManualRate()" class="btn btn-primary" style="flex:1;padding:10px;">저장</button>
-      <button onclick="closeRateModal()" class="btn btn-ghost" style="padding:10px 14px;">취소</button>
+    <div class="hint">
+      📌 확인처<br>
+      • 네이버: "달러 환율" 검색<br>
+      • 하나은행 앱 → 환율 조회<br>
+      • koreaexim.go.kr
     </div>
   </div>
 </div>
 
 <script>
-const DEFAULT={currentRate:null,lastFetch:null,settings:{budget:10000000,goal:6600,ma20:1480,tranches:3,gap:20,alert2:1500,alert3:1480},records:[],rateHistory:[],events:[{id:'e1',name:'미국-이란 휴전 협상 타결',desc:'유가 급락 → 원화 강세',drop:40,done:false},{id:'e2',name:'FOMC 금리 인하 신호',desc:'달러 약세 전환 기대',drop:25,done:false},{id:'e3',name:'유가 배럴당 80달러 이하',desc:'에너지 리스크 완화',drop:30,done:false},{id:'e4',name:'트럼프 무역 협상 타결',desc:'달러 인덱스 하락 기대',drop:20,done:false}]};
-let state=JSON.parse(JSON.stringify(DEFAULT));
-let rateChart=null,stratChart=null;
+// ── 상수 ──────────────────────────────────────
+const STORAGE_KEY = 'exchTracker4';
 
-function save(){try{localStorage.setItem('exchTracker3',JSON.stringify(state));}catch(e){}}
-function load(){try{const d=localStorage.getItem('exchTracker3');if(d){const p=JSON.parse(d);state={...DEFAULT,...p,events:p.events||DEFAULT.events};}}catch(e){}}
+// Frankfurter API v1 (키 없음, CORS 허용, KRW 지원)
+// latest 응답:  { date:"2026-04-01", base:"USD", rates:{ KRW:1499.5 } }
+// 기간 응답:    { base:"USD", start_date, end_date, rates:{ "2026-03-01":{ KRW:1490 }, ... } }
+const API_LATEST = 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW';
+const API_RANGE  = (f,t) => `https://api.frankfurter.dev/v1/${f}..${t}?base=USD&symbols=KRW`;
 
-const fmt=n=>Math.round(n).toLocaleString('ko-KR');
-const today=()=>new Date().toISOString().split('T')[0];
+const COLORS = ['#9FE1CB','#5DCAA5','#1D9E75','#0F6E56','#085041'];
+const WEIGHTS = {2:[40,60],3:[25,35,40],4:[20,25,30,25],5:[15,20,25,20,20]};
 
-function calcMA20(){
-  const h=state.rateHistory;
-  if(!h||h.length===0)return state.settings.ma20;
-  const sorted=[...h].sort((a,b)=>a.date.localeCompare(b.date)).slice(-20);
-  if(sorted.length<3)return state.settings.ma20;
+// ── 초기 상태 ─────────────────────────────────
+const DEFAULT = {
+  currentRate: null,
+  lastFetch: null,
+  settings: { budget:10000000, goal:6600, ma20:1480, tranches:3, gap:20, alert2:1500, alert3:1480 },
+  records: [],
+  rateHistory: [],
+  events: [
+    {id:'e1',name:'미국-이란 휴전 협상 타결',desc:'유가 급락 → 원화 강세',drop:40,done:false},
+    {id:'e2',name:'FOMC 금리 인하 신호',desc:'달러 약세 전환 기대',drop:25,done:false},
+    {id:'e3',name:'유가 배럴당 80달러 이하',desc:'에너지 리스크 완화',drop:30,done:false},
+    {id:'e4',name:'트럼프 무역 협상 타결',desc:'달러 인덱스 하락 기대',drop:20,done:false},
+  ]
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULT));
+let rChart = null, sChart = null;
+
+// ── 유틸 ──────────────────────────────────────
+const fmt   = n => Math.round(n).toLocaleString('ko-KR');
+const today = () => new Date().toISOString().split('T')[0];
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+}
+function load() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) {
+      const parsed = JSON.parse(d);
+      state = Object.assign({}, DEFAULT, parsed);
+      if (!state.events || !state.events.length) state.events = DEFAULT.events;
+    }
+  } catch(e){}
+}
+
+function calcMA20() {
+  const h = state.rateHistory;
+  if (!h || h.length < 3) return state.settings.ma20;
+  const sorted = [...h].sort((a,b)=>a.date.localeCompare(b.date)).slice(-20);
+  if (sorted.length < 3) return state.settings.ma20;
   return Math.round(sorted.reduce((s,r)=>s+r.rate,0)/sorted.length);
 }
 
-function statusInfo(rate,ma20){
-  const diff=rate-ma20;
-  if(diff>30)return{label:'고평가 — 대기',cls:'badge-danger',color:'var(--red)',bg:'var(--red-dim)',alertCls:'alert-red'};
-  if(diff>0)return{label:'주의 구간',cls:'badge-warn',color:'var(--amber)',bg:'var(--amber-dim)',alertCls:'alert-amber'};
-  return{label:'매수 구간',cls:'badge-ok',color:'var(--green)',bg:'var(--green-dim)',alertCls:'alert-green'};
+function statusInfo(rate, ma20) {
+  const d = rate - ma20;
+  if (d > 30) return {label:'고평가 — 대기', bc:'badge-r', ac:'alert-r', dot:'var(--red)'};
+  if (d > 0)  return {label:'주의 구간',      bc:'badge-a', ac:'alert-a', dot:'var(--amber)'};
+  return             {label:'매수 구간',       bc:'badge-g', ac:'alert-g', dot:'var(--green)'};
 }
 
-function setRateHistory(date,rate,source){
-  const ex=state.rateHistory.find(r=>r.date===date);
-  if(ex){ex.rate=rate;ex.source=source;}
-  else{state.rateHistory.push({date,rate,source});if(state.rateHistory.length>90){state.rateHistory.sort((a,b)=>a.date.localeCompare(b.date));state.rateHistory.shift();}}
+function setRateHistory(date, rate, source) {
+  const ex = state.rateHistory.find(r=>r.date===date);
+  if (ex) {
+    // 직접 입력(source 없음)은 API로 덮어쓰지 않음
+    if (source === 'api' && !ex.source) return;
+    ex.rate = rate;
+    ex.source = source;
+  } else {
+    state.rateHistory.push({date, rate, source});
+  }
 }
 
-// Frankfurter API: 키없음, KRW 지원, 한 번에 기간 조회 가능, ECB 기준 영업일 데이터
-// https://api.frankfurter.dev/v1/{from}..{to}?base=USD&symbols=KRW
-const FRANKFURTER_RANGE = (from, to) =>
-  `https://api.frankfurter.dev/v1/${from}..${to}?base=USD&symbols=KRW`;
-const FRANKFURTER_LATEST = 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW';
-
+// ── API ────────────────────────────────────────
 async function autoFetchToday() {
   const icon = document.getElementById('refreshIcon');
-  if (icon) icon.classList.add('spinning');
+  if (icon) { icon.textContent='⟳'; icon.classList.add('spin'); }
   try {
-    const res = await fetch(FRANKFURTER_LATEST);
-    if (!res.ok) throw new Error('net');
+    const res = await fetch(API_LATEST);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    if (!data.rates || !data.rates.KRW) throw new Error('parse');
-    const krw = Math.round(data.rates.KRW);
-    const dateStr = data.date || today(); // API가 반환하는 날짜 사용
-    setRateHistory(dateStr, krw, 'api');
-    state.currentRate = krw;
-    state.lastFetch = new Date().toLocaleString('ko-KR') + ' (자동)';
-    save(); render();
-    checkAlerts();
+    // v1 latest: { date, base, rates:{ KRW:1499 } }
+    if (!data.rates || !data.rates.KRW) throw new Error('KRW 없음');
+    const rate = Math.round(data.rates.KRW);
+    const dateStr = data.date || today();
+    setRateHistory(dateStr, rate, 'api');
+    if (!state.currentRate || (state.lastFetch && state.lastFetch.includes('자동'))) {
+      state.currentRate = rate;
+      state.lastFetch = new Date().toLocaleString('ko-KR') + ' (자동)';
+    }
+    save();
   } catch(e) {
-    console.warn('오늘 환율 조회 실패:', e.message);
+    console.warn('[오늘환율]', e.message);
+  } finally {
+    if (icon) { icon.textContent='↻'; icon.classList.remove('spin'); }
+    render();
   }
-  if (icon) icon.classList.remove('spinning');
 }
 
-async async function fetchHistoryForMA20() {
-  // 최근 45일 기간으로 한 번에 조회 (영업일 30일 이상 확보)
+async function fetchHistoryForMA20() {
   const toDate = today();
   const fromDate = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 45);
+    const d = new Date(); d.setDate(d.getDate()-45);
     return d.toISOString().split('T')[0];
   })();
-
-  const el = document.getElementById('ma20Display');
-  if (el) el.textContent = 'MA20 데이터 수집 중...';
-
   try {
-    const url = FRANKFURTER_RANGE(fromDate, toDate);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('net');
+    const res = await fetch(API_RANGE(fromDate, toDate));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    if (!data.rates) throw new Error('parse');
-
+    // v1 기간: { base, rates:{ "2026-03-01":{ KRW:1490 }, ... } }
+    if (!data.rates || typeof data.rates !== 'object') throw new Error('rates 없음');
     let added = 0;
-    Object.entries(data.rates).forEach(([date, rates]) => {
-      if (!rates.KRW) return;
-      const rate = Math.round(rates.KRW);
-      // 직접 입력한 데이터(source 없음)는 보존, API 데이터만 채움
-      const existing = state.rateHistory.find(r => r.date === date);
-      if (!existing) {
-        setRateHistory(date, rate, 'api');
-        added++;
-      }
+    Object.entries(data.rates).forEach(([date, currencies]) => {
+      const krw = currencies && currencies.KRW;
+      if (!krw) return;
+      const existing = state.rateHistory.find(r=>r.date===date);
+      if (!existing) { setRateHistory(date, Math.round(krw), 'api'); added++; }
     });
-
-    state.rateHistory.sort((a, b) => a.date.localeCompare(b.date));
-    if (state.rateHistory.length > 90) {
-      state.rateHistory = state.rateHistory.slice(-90);
-    }
-
-    save(); render();
-    console.log(`MA20 히스토리: ${added}일치 추가 (총 ${state.rateHistory.length}일)`);
+    state.rateHistory.sort((a,b)=>a.date.localeCompare(b.date));
+    if (state.rateHistory.length > 90) state.rateHistory = state.rateHistory.slice(-90);
+    save();
+    console.log('[MA20히스토리]', added+'일 추가, 총 '+state.rateHistory.length+'일');
   } catch(e) {
-    console.warn('MA20 히스토리 조회 실패:', e.message);
-    if (el) el.textContent = 'MA20: — (데이터 수집 실패)';
+    console.warn('[MA20히스토리]', e.message, '→ 설정값 fallback');
   }
+  render();
 }
 
-async function doRefresh(){await autoFetchToday();}
-
-function showRateInput(){
-  const m=document.getElementById('rateInputModal');
-  document.getElementById('manualRateInput').value=state.currentRate||'';
-  m.style.display='flex';
-  setTimeout(()=>{const i=document.getElementById('manualRateInput');i.focus();i.select();},50);
-}
-function closeRateModal(){document.getElementById('rateInputModal').style.display='none';}
-function applyManualRate(){
-  const val=parseFloat(document.getElementById('manualRateInput').value);
-  if(!val||val<900||val>2500){alert('올바른 환율을 입력해주세요 (900~2500)');return;}
-  const rate=Math.round(val);
-  setRateHistory(today(),rate,'manual');
-  state.currentRate=rate;state.lastFetch=new Date().toLocaleString('ko-KR')+' (수동 입력)';
-  save();render();closeRateModal();
-}
-document.getElementById('manualRateInput').addEventListener('keydown',e=>{if(e.key==='Enter')applyManualRate();});
-document.getElementById('rateInputModal').addEventListener('click',e=>{if(e.target.id==='rateInputModal')closeRateModal();});
-
-function render(){renderHeader();renderAlerts();renderKPI();renderGoal();renderRateChart();renderEventsDash();renderStrategy2();renderStrategy3();renderStratChart();renderRecords();renderSettings();renderRateHistory();}
-
-function renderHeader(){
-  const r=state.currentRate;const ma20=calcMA20();const cnt=state.rateHistory.length;
-  document.getElementById('heroRate').textContent=r?fmt(r):'—';
-  document.getElementById('lastUpdate').textContent=state.lastFetch||'환율 조회 중...';
-  document.getElementById('ma20Display').textContent=cnt>=3?`MA20: ${fmt(ma20)}원  (${cnt}일 데이터)`:`MA20: ${fmt(ma20)}원  (설정값, 데이터 ${cnt}일)`;
-  if(r){const s=statusInfo(r,ma20);document.getElementById('heroBadge').innerHTML=`<span class="rate-badge ${s.cls}">${s.label}</span>`;}
+function fetchRate() {
+  (async()=>{ await autoFetchToday(); await fetchHistoryForMA20(); })();
 }
 
-function renderAlerts(){
-  const r=state.currentRate;if(!r)return;
-  const ma20=calcMA20();const s=statusInfo(r,ma20);
-  let msg=`현재 ${fmt(r)}원 — ${s.label}`;
-  if(r<=state.settings.alert3)msg+=' · 3단계 분할 매수 시작!';
-  else if(r<=state.settings.alert2)msg+=' · 이벤트 트리거 주시';
-  document.getElementById('alertArea').innerHTML=`<div class="alert-bar ${s.alertCls} fade-in"><span>●</span><span>${msg}</span></div>`;
+// ── 수동 입력 ──────────────────────────────────
+function showRateModal() {
+  document.getElementById('modalRate').value = state.currentRate || '';
+  document.getElementById('rateModal').style.display = 'flex';
+  setTimeout(()=>{ const i=document.getElementById('modalRate'); if(i){i.focus();i.select();} },50);
+}
+function hideRateModal() { document.getElementById('rateModal').style.display='none'; }
+function applyManualRate() {
+  const v = parseFloat(document.getElementById('modalRate').value);
+  if (!v || v < 900 || v > 2500) { alert('올바른 환율을 입력해주세요 (900~2500)'); return; }
+  const rate = Math.round(v);
+  state.currentRate = rate;
+  state.lastFetch = new Date().toLocaleString('ko-KR') + ' (직접 입력)';
+  const td = today();
+  const ex = state.rateHistory.find(r=>r.date===td);
+  if (ex) { ex.rate = rate; delete ex.source; }
+  else { state.rateHistory.push({date:td, rate}); }
+  state.rateHistory.sort((a,b)=>a.date.localeCompare(b.date));
+  save(); render(); hideRateModal();
 }
 
-function renderKPI(){
-  const r=state.currentRate||0;const ma20=calcMA20();const diff=r-ma20;
-  const diffPct=ma20?((diff/ma20)*100).toFixed(1):'0.0';
-  const totalUsd=state.records.reduce((s,x)=>s+Math.round(x.amount/x.rate),0);
-  const totalWon=state.records.reduce((s,x)=>s+x.amount,0);
-  const avgRate=totalUsd>0?Math.round(totalWon/totalUsd):0;
-  const items=[
-    {label:'현재 환율',val:r?fmt(r)+'원':'조회 중',sub:'USD/KRW',color:'var(--text)'},
-    {label:'MA20 대비',val:r?(diff>=0?'+':'')+fmt(diff)+'원':'—',sub:r?diffPct+'% 프리미엄':'',color:diff>30?'var(--red)':diff>0?'var(--amber)':'var(--green)'},
-    {label:'환전 완료',val:'$'+fmt(totalUsd),sub:totalUsd>0?'평균 '+fmt(avgRate)+'원':'기록 없음',color:'var(--green)'},
-    {label:'잔여 예산',val:fmt(Math.max(0,state.settings.budget-totalWon))+'원',sub:'총 '+fmt(state.settings.budget)+'원',color:'var(--blue)'},
-  ];
-  document.getElementById('kpiGrid').innerHTML=items.map(i=>`<div class="metric"><div class="metric-label">${i.label}</div><div class="metric-val" style="color:${i.color};font-size:16px;">${i.val}</div><div class="metric-sub">${i.sub}</div></div>`).join('');
+// ── 탭 전환 ───────────────────────────────────
+function switchTab(name, el) {
+  ['dashboard','strategy','records','settings'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===name?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  if (el) el.classList.add('on');
 }
 
-function renderGoal(){
-  const totalUsd=state.records.reduce((s,x)=>s+Math.round(x.amount/x.rate),0);
-  const goal=state.settings.goal;const pct=Math.min(100,Math.round(totalUsd/goal*100));
-  document.getElementById('goalProgress').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;">
-      <span style="font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--accent);">$${fmt(totalUsd)}</span>
-      <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);">/ $${fmt(goal)} 목표</span>
+// ── 렌더 ──────────────────────────────────────
+function render() {
+  renderHeader();
+  renderAlert();
+  renderKPI();
+  renderGoal();
+  renderRateChart();
+  renderEvents();
+  renderStrat2();
+  renderStrat3();
+  renderStratChart();
+  renderRecords();
+  renderSettings();
+  renderHistory();
+}
+
+function renderHeader() {
+  const r = state.currentRate;
+  const ma20 = calcMA20();
+  const cnt = state.rateHistory.length;
+  document.getElementById('heroRate').textContent = r ? fmt(r) : '—';
+  document.getElementById('lastUpdate').textContent = state.lastFetch || '환율 조회 중...';
+  document.getElementById('ma20txt').textContent =
+    cnt >= 3 ? `MA20: ${fmt(ma20)}원  (${cnt}일 데이터)` : `MA20: ${fmt(ma20)}원  (설정값)`;
+  const badge = document.getElementById('heroBadge');
+  if (r) {
+    const s = statusInfo(r, ma20);
+    badge.innerHTML = `<span class="badge ${s.bc}">${s.label}</span>`;
+  } else { badge.innerHTML = ''; }
+}
+
+function renderAlert() {
+  const r = state.currentRate;
+  const el = document.getElementById('alertArea');
+  if (!r) { el.innerHTML=''; return; }
+  const ma20 = calcMA20();
+  const s = statusInfo(r, ma20);
+  let msg = `현재 ${fmt(r)}원 — ${s.label}`;
+  if (r <= state.settings.alert3) msg += ' · 3단계 분할 매수 시작 조건!';
+  else if (r <= state.settings.alert2) msg += ' · 이벤트 트리거 주시';
+  el.innerHTML = `<div class="alert ${s.ac}"><span>●</span><span>${msg}</span></div>`;
+}
+
+function renderKPI() {
+  const r = state.currentRate || 0;
+  const ma20 = calcMA20();
+  const diff = r - ma20;
+  const diffPct = ma20 ? ((diff/ma20)*100).toFixed(1) : '0';
+  const totalUsd = state.records.reduce((s,x)=>s+Math.round(x.amount/x.rate),0);
+  const totalWon = state.records.reduce((s,x)=>s+x.amount,0);
+  const avgRate  = totalUsd>0 ? Math.round(totalWon/totalUsd) : 0;
+  const remain   = Math.max(0, state.settings.budget - totalWon);
+  const diffColor = diff>30?'var(--red)':diff>0?'var(--amber)':'var(--green)';
+  document.getElementById('kpiGrid').innerHTML = [
+    {label:'현재 환율', val:r?fmt(r)+'원':'—', sub:'USD/KRW', color:'var(--text)'},
+    {label:'MA20 대비', val:(diff>=0?'+':'')+fmt(diff)+'원', sub:diffPct+'% 프리미엄', color:diffColor},
+    {label:'환전 완료', val:'$'+fmt(totalUsd), sub:totalUsd>0?'평균 '+fmt(avgRate)+'원':'기록 없음', color:'var(--green)'},
+    {label:'잔여 예산', val:fmt(remain)+'원', sub:'총 '+fmt(state.settings.budget)+'원', color:'var(--blue)'},
+  ].map(m=>`<div class="metric"><div class="mlabel">${m.label}</div><div class="mval" style="color:${m.color}">${m.val}</div><div class="msub">${m.sub}</div></div>`).join('');
+}
+
+function renderGoal() {
+  const goal = state.settings.goal;
+  const done = state.records.reduce((s,x)=>s+Math.round(x.amount/x.rate),0);
+  const pct  = Math.min(100, Math.round(done/goal*100));
+  document.getElementById('goalArea').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+      <span style="font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--accent)">$${fmt(done)}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">/ $${fmt(goal)} 목표</span>
     </div>
-    <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,#4ade80,#e8ff57);"></div></div>
-    <div class="progress-label"><span>${pct}% 달성</span><span>잔여 $${fmt(Math.max(0,goal-totalUsd))}</span></div>`;
+    <div class="pbar"><div class="pfill" style="width:${pct}%;background:linear-gradient(90deg,#4ade80,#e8ff57)"></div></div>
+    <div class="plabel"><span>${pct}% 달성</span><span>잔여 $${fmt(Math.max(0,goal-done))}</span></div>`;
 }
 
-function renderRateChart(){
-  const ctx=document.getElementById('rateChart').getContext('2d');
-  const sorted=[...state.rateHistory].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);
-  let labels,rates;
-  if(sorted.length>1){labels=sorted.map(r=>r.date.slice(5));rates=sorted.map(r=>r.rate);}
-  else{labels=[];rates=[];const base=state.settings.ma20||1480;for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);labels.push((d.getMonth()+1)+'/'+(d.getDate()));rates.push(base+Math.round(Math.sin(i*.3)*35+(29-i)*1.2));}}
-  const ma20Line=rates.map((_,i)=>{const win=rates.slice(Math.max(0,i-19),i+1);return win.length>=3?Math.round(win.reduce((s,v)=>s+v,0)/win.length):null;});
-  if(rateChart)rateChart.destroy();
-  rateChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'USD/KRW',data:rates,borderColor:'#e8ff57',backgroundColor:'rgba(232,255,87,0.06)',borderWidth:1.5,pointRadius:0,tension:.3,fill:true},{label:'MA20',data:ma20Line,borderColor:'rgba(96,165,250,0.6)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+Math.round(c.raw).toLocaleString()+'원'}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5a5a56',font:{size:10,family:'DM Mono'},maxTicksLimit:8}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5a5a56',font:{size:10,family:'DM Mono'},callback:v=>fmt(v)}}}}});
+function renderRateChart() {
+  const ctx = document.getElementById('rateChart').getContext('2d');
+  let labels, data;
+  const sorted = [...state.rateHistory].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);
+  if (sorted.length > 1) {
+    labels = sorted.map(r=>r.date.slice(5));
+    data   = sorted.map(r=>r.rate);
+  } else {
+    labels=[]; data=[];
+    const base=state.settings.ma20||1480;
+    for(let i=29;i>=0;i--){
+      const d=new Date(); d.setDate(d.getDate()-i);
+      labels.push((d.getMonth()+1)+'/'+(d.getDate()));
+      data.push(base+Math.round(Math.sin(i*.3)*30+(29-i)*1.2));
+    }
+  }
+  const ma20 = calcMA20();
+  if (rChart) rChart.destroy();
+  rChart = new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'환율',data,borderColor:'#e8ff57',backgroundColor:'rgba(232,255,87,.06)',borderWidth:1.5,pointRadius:0,tension:.3,fill:true},
+      {label:'MA20',data:Array(data.length).fill(ma20),borderColor:'rgba(96,165,250,.5)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+Math.round(c.raw).toLocaleString()+'원'}}},scales:{
+      x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5a5a56',font:{size:10,family:'DM Mono'},maxTicksLimit:8}},
+      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5a5a56',font:{size:10,family:'DM Mono'},callback:v=>fmt(v)}},
+    }},
+  });
 }
 
-function renderEventsDash(){
-  const r=state.currentRate||0;
-  document.getElementById('eventListDash').innerHTML=state.events.map(e=>`
-    <div class="event-item" onclick="toggleEvent('${e.id}')">
-      <div class="event-check ${e.done?'checked':''}">${e.done?'✓':''}</div>
-      <div><div class="event-name">${e.name}</div><div class="event-desc">${e.desc}</div>
-      <div class="event-impact" style="color:${e.done?'var(--green)':'var(--text3)'};">${e.done?'✓ 트리거 확인됨':r?`예상 → ${fmt(r-e.drop)}원 (-${e.drop}원)`:'-'+e.drop+'원'}</div></div>
+function renderEvents() {
+  const r = state.currentRate || 0;
+  document.getElementById('eventList').innerHTML = state.events.map(e=>`
+    <div class="evt" onclick="toggleEvent('${e.id}')">
+      <div class="chk ${e.done?'on':''}">${e.done?'✓':''}</div>
+      <div>
+        <div class="ename">${e.name}</div>
+        <div class="edesc">${e.desc}</div>
+        <div class="eimpact" style="color:${e.done?'var(--green)':'var(--text3)'}">
+          ${e.done?'✓ 트리거 확인됨':r?`예상 → ${fmt(r-e.drop)}원 (-${e.drop}원)`:`예상 하락 -${e.drop}원`}
+        </div>
+      </div>
     </div>`).join('');
 }
 
-function toggleEvent(id){const e=state.events.find(x=>x.id===id);if(e){e.done=!e.done;save();render();}}
-
-function renderStrategy2(){
-  const r=state.currentRate||state.settings.ma20;const half=state.settings.budget*.5;const perEvent=Math.round(half/state.events.length);
-  const rows=state.events.map(e=>{const eRate=r-e.drop;const usd=Math.round(perEvent/eRate);return`<div class="tranche-item"><div class="tranche-num" style="background:${e.done?'var(--green-dim)':'var(--bg3)'};color:${e.done?'var(--green)':'var(--text3)'};">${e.done?'✓':'→'}</div><div class="tranche-info"><div class="tranche-price">${e.name}</div><div class="tranche-desc">예상 ${fmt(eRate)}원 (-${e.drop}원)</div></div><div class="tranche-right"><div class="tranche-usd">$${fmt(usd)}</div><div class="tranche-won">${fmt(perEvent)}원</div></div></div>`;}).join('');
-  const avgRate=Math.round(state.events.reduce((s,e)=>s+(r-e.drop),0)/state.events.length);
-  document.getElementById('strategy2Detail').innerHTML=rows+`<hr class="divider"><div class="sum-row total"><span class="sum-label">예상 취득 달러</span><span class="sum-val">$${fmt(Math.round(half/avgRate))}</span></div><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;">평균 ${fmt(avgRate)}원 기준</div>`;
+function toggleEvent(id) {
+  const e = state.events.find(x=>x.id===id);
+  if (e) { e.done=!e.done; save(); render(); }
 }
 
-function renderStrategy3(){
-  const ma20=calcMA20();const half=state.settings.budget*.5;const n=state.settings.tranches;const gap=state.settings.gap;
-  const weightSets={2:[40,60],3:[25,35,40],4:[20,25,30,25],5:[15,20,25,20,20]};const weights=weightSets[n]||weightSets[3];
-  const colors=['#9FE1CB','#5DCAA5','#1D9E75','#0F6E56','#085041'];const bgColors=['rgba(159,225,203,.15)','rgba(93,202,165,.12)','rgba(29,158,117,.1)','rgba(15,110,86,.1)','rgba(8,80,65,.1)'];
-  const r=state.currentRate||0;
-  let rows='';
-  for(let i=0;i<n;i++){const price=ma20-i*gap;const pct=weights[i];const amount=Math.round(half*pct/100);const usd=Math.round(amount/price);const isActive=r>0&&r<=price;rows+=`<div class="tranche-item" style="${isActive?'background:rgba(74,222,128,0.04);border-radius:6px;padding-left:6px;':''}"><div class="tranche-num" style="background:${bgColors[i]};color:${colors[i]};">${i+1}</div><div class="tranche-info"><div class="tranche-price" style="color:${isActive?'var(--green)':'var(--text)'}">${fmt(price)}원 이하</div><div class="tranche-desc">MA20 -${i*gap}원 · 비중 ${pct}%</div><div style="height:3px;background:var(--bg3);border-radius:2px;margin-top:4px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${colors[i]};border-radius:2px;"></div></div></div><div class="tranche-right"><div class="tranche-usd" style="color:${colors[i]};">$${fmt(usd)}</div><div class="tranche-won">${fmt(amount)}원</div></div></div>`;}
-  document.getElementById('strategy3Detail').innerHTML=rows+`<hr class="divider"><div class="sum-row total"><span class="sum-label">예상 취득 달러</span><span class="sum-val">$${fmt(Math.round(half/ma20))}</span></div><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;">평균 MA20 ${fmt(ma20)}원 기준</div>`;
-}
-
-function renderStratChart(){
-  const r=state.currentRate||state.settings.ma20;const ma20=calcMA20();const budget=state.settings.budget;const half=budget*.5;
-  const avgEv=Math.round(state.events.reduce((s,e)=>s+(r-e.drop),0)/state.events.length);
-  const usd2=Math.round(half/avgEv);const usd3=Math.round(half/ma20);const usdNow=Math.round(budget/r);const total=usd2+usd3;
-  const avgFinal=Math.round(budget/total);const saving=Math.round((r-avgFinal)*total);
-  const ctx=document.getElementById('stratChart').getContext('2d');
-  if(stratChart)stratChart.destroy();
-  stratChart=new Chart(ctx,{type:'bar',data:{labels:['즉시 환전','2단계','3단계'],datasets:[{data:[usdNow,usd2,usd3],backgroundColor:['rgba(90,90,86,.4)','rgba(96,165,250,.6)','rgba(74,222,128,.6)'],borderRadius:6,barThickness:30}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' $'+Math.round(c.raw).toLocaleString()}}},scales:{x:{grid:{display:false},ticks:{color:'#5a5a56',font:{size:10,family:'DM Mono'}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5a5a56',font:{size:10,family:'DM Mono'},callback:v=>'$'+Math.round(v/1000)+'k'}}}}});
-  document.getElementById('stratSummary').innerHTML=`<div class="sum-row"><span class="sum-label">2단계 취득</span><span class="sum-val" style="color:var(--blue);">$${fmt(usd2)}</span></div><div class="sum-row"><span class="sum-label">3단계 취득</span><span class="sum-val" style="color:var(--green);">$${fmt(usd3)}</span></div><div class="sum-row total"><span class="sum-label">전략 합계</span><span class="sum-val">$${fmt(total)}</span></div><div class="sum-row"><span class="sum-label">예상 평균 환율</span><span class="sum-val">${fmt(avgFinal)}원</span></div><div class="sum-row"><span class="sum-label">즉시 대비 절약</span><span class="sum-val" style="color:var(--green);">+${fmt(saving)}원</span></div><div class="sum-row"><span class="sum-label">즉시 환전 시</span><span class="sum-val" style="color:var(--text3);">$${fmt(usdNow)}</span></div>`;
-}
-
-function addRecord(){
-  const rate=parseFloat(document.getElementById('recRate').value);const amount=parseFloat(document.getElementById('recAmount').value);
-  if(!rate||!amount){alert('환율과 금액을 입력하세요.');return;}
-  const date=document.getElementById('recDate').value||today();const note=document.getElementById('recNote').value;
-  state.records.push({id:Date.now(),date,rate,amount,note});
-  setRateHistory(date,rate,'manual');
-  document.getElementById('recRate').value='';document.getElementById('recAmount').value='';document.getElementById('recNote').value='';
-  save();render();
-}
-function deleteRecord(id){state.records=state.records.filter(r=>r.id!==id);save();render();}
-
-function renderRecords(){
-  const recs=[...state.records].sort((a,b)=>b.date.localeCompare(a.date));
-  document.getElementById('recCount').textContent=recs.length+'건';
-  if(recs.length===0){document.getElementById('recordsTable').innerHTML='<div class="empty-state">환전 내역이 없습니다</div>';document.getElementById('recSummaryCard').innerHTML='';return;}
-  const rows=recs.map(r=>{const usd=Math.round(r.amount/r.rate);return`<tr><td class="td-date">${r.date}</td><td class="td-rate">${fmt(r.rate)}원</td><td>${fmt(r.amount)}원</td><td class="td-usd">$${fmt(usd)}</td><td style="color:var(--text3);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.note||'—'}</td><td><button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">✕</button></td></tr>`;}).join('');
-  document.getElementById('recordsTable').innerHTML=`<table class="record-table"><thead><tr><th>날짜</th><th>환율</th><th>금액(원)</th><th>달러</th><th>메모</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
-  const totalWon=state.records.reduce((s,r)=>s+r.amount,0);const totalUsd=state.records.reduce((s,r)=>s+Math.round(r.amount/r.rate),0);const avgRate=totalUsd>0?Math.round(totalWon/totalUsd):0;const curVal=state.currentRate?Math.round(totalUsd*state.currentRate):0;const gain=curVal-totalWon;
-  document.getElementById('recSummaryCard').innerHTML=`<div class="card"><div class="card-title">환전 실적 요약</div><div class="grid4"><div class="metric"><div class="metric-label">총 환전금액</div><div class="metric-val" style="font-size:14px;">${fmt(totalWon)}원</div></div><div class="metric"><div class="metric-label">취득 달러</div><div class="metric-val" style="font-size:14px;color:var(--green);">$${fmt(totalUsd)}</div></div><div class="metric"><div class="metric-label">평균 환율</div><div class="metric-val" style="font-size:14px;color:var(--blue);">${fmt(avgRate)}원</div></div><div class="metric"><div class="metric-label">평가손익</div><div class="metric-val" style="font-size:14px;color:${gain>=0?'var(--green)':'var(--red)'};">${gain>=0?'+':''}${fmt(gain)}원</div></div></div></div>`;
-}
-
-function renderSettings(){
-  const s=state.settings;
-  document.getElementById('setBudget').value=s.budget;document.getElementById('setGoal').value=s.goal;document.getElementById('setMA20').value=s.ma20;
-  document.getElementById('setTranches').value=s.tranches;document.getElementById('setGap').value=s.gap;document.getElementById('setAlert2').value=s.alert2;document.getElementById('setAlert3').value=s.alert3;
-  document.getElementById('trancheVal').textContent=s.tranches+'구간';document.getElementById('gapVal').textContent=s.gap+'원';
-  document.getElementById('recDate').value=today();
-}
-function saveSettings(){
-  state.settings={budget:parseFloat(document.getElementById('setBudget').value)||10000000,goal:parseFloat(document.getElementById('setGoal').value)||6600,ma20:parseFloat(document.getElementById('setMA20').value)||1480,tranches:parseInt(document.getElementById('setTranches').value)||3,gap:parseInt(document.getElementById('setGap').value)||20,alert2:parseFloat(document.getElementById('setAlert2').value)||1500,alert3:parseFloat(document.getElementById('setAlert3').value)||1480};
-  save();render();alert('저장됐습니다.');
-}
-
-function renderRateHistory(){
-  const history=[...state.rateHistory].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
-  const sorted=[...state.rateHistory].sort((a,b)=>a.date.localeCompare(b.date));
-  const countEl=document.getElementById('historyCount');if(countEl)countEl.textContent=state.rateHistory.length+'일 데이터';
-  const el=document.getElementById('rateHistoryTable');if(!el)return;
-  if(history.length===0){el.innerHTML='<div class="empty-state">데이터 없음 — 앱 실행 시 자동 수집됩니다</div>';return;}
-  const srcInfo={'api':{label:'자동',color:'var(--green)'},'api-hist':{label:'과거',color:'var(--text3)'},'manual':{label:'수동',color:'var(--amber)'}};
-  const rows=history.map(r=>{
-    const idx=sorted.findIndex(x=>x.date===r.date);const win=sorted.slice(Math.max(0,idx-19),idx+1);
-    const dayMA20=win.length>=3?Math.round(win.reduce((s,x)=>s+x.rate,0)/win.length):null;const diff=dayMA20?r.rate-dayMA20:null;
-    const src=srcInfo[r.source]||srcInfo['api'];const diffColor=diff===null?'var(--text3)':diff>30?'var(--red)':diff>0?'var(--amber)':'var(--green)';
-    return`<tr><td class="td-date" style="padding:8px 8px 8px 0;border-bottom:0.5px solid var(--border);">${r.date}</td><td style="padding:8px 8px 8px 0;border-bottom:0.5px solid var(--border);"><span class="src-badge" style="background:${src.color}22;color:${src.color};">${src.label}</span></td><td style="color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:8px 8px 8px 0;border-bottom:0.5px solid var(--border);">${fmt(r.rate)}원</td><td style="color:var(--blue);font-family:'DM Mono',monospace;font-size:12px;padding:8px 8px 8px 0;border-bottom:0.5px solid var(--border);">${dayMA20?fmt(dayMA20)+'원':'—'}</td><td style="color:${diffColor};font-family:'DM Mono',monospace;font-size:12px;padding:8px 8px 8px 0;border-bottom:0.5px solid var(--border);">${diff===null?'—':(diff>=0?'+':'')+fmt(diff)+'원'}</td><td style="padding:8px 0;border-bottom:0.5px solid var(--border);"><button onclick="deleteRateHistory('${r.date}')" class="btn btn-danger btn-sm">✕</button></td></tr>`;
+function renderStrat2() {
+  const {budget,ma20:ma20s} = state.settings;
+  const half = budget*.5;
+  const r = state.currentRate || calcMA20();
+  const n = state.events.length;
+  let html = state.events.map(e=>{
+    const rate = r - e.drop;
+    const usd  = Math.round((half/n)/rate);
+    return `<div class="tr">
+      <div class="tr-num" style="background:${e.done?'var(--green-d)':'var(--bg3)'};color:${e.done?'var(--green)':'var(--text3)'};">${e.done?'✓':'→'}</div>
+      <div class="tr-info"><div class="tr-price" style="font-size:12px;">${e.name}</div><div class="tr-desc">예상 ${fmt(rate)}원</div></div>
+      <div class="tr-r"><div class="tr-usd" style="color:var(--green);">$${fmt(usd)}</div><div class="tr-won">${fmt(Math.round(half/n))}원</div></div>
+    </div>`;
   }).join('');
-  el.innerHTML=`<div class="record-wrap"><table class="record-table" style="min-width:420px;"><thead><tr><th>날짜</th><th>출처</th><th>환율</th><th>당일 MA20</th><th>MA20 대비</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  const avgRate = Math.round(state.events.reduce((s,e)=>s+(r-e.drop),0)/n);
+  html += `<hr><div class="srow tot"><span class="sl">예상 취득 달러</span><span class="sv" style="color:var(--accent);">$${fmt(Math.round(half/avgRate))}</span></div>`;
+  document.getElementById('strat2').innerHTML = html;
 }
-function deleteRateHistory(date){state.rateHistory=state.rateHistory.filter(r=>r.date!==date);if(date===today()){state.currentRate=null;state.lastFetch=null;}save();render();}
 
-function switchTab(name,btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');btn.classList.add('active');}
+function renderStrat3() {
+  const {budget,tranches,gap} = state.settings;
+  const ma20 = calcMA20();
+  const half = budget*.5;
+  const weights = WEIGHTS[tranches]||WEIGHTS[3];
+  const r = state.currentRate||0;
+  let html = '';
+  for(let i=0;i<tranches;i++){
+    const price = ma20 - i*gap;
+    const pct   = weights[i];
+    const amt   = Math.round(half*pct/100);
+    const usd   = Math.round(amt/price);
+    const active= r>0 && r<=price;
+    html += `<div class="tr" style="${active?'background:rgba(74,222,128,.04);border-radius:6px;padding:6px;margin:-2px;':''}">
+      <div class="tr-num" style="background:${COLORS[i]}22;color:${COLORS[i]}">${i+1}</div>
+      <div class="tr-info">
+        <div class="tr-price">${fmt(price)}원 이하</div>
+        <div class="tr-desc">MA20 -${i*gap}원 · 비중 ${pct}%</div>
+        <div class="minibar"><div class="minifill" style="width:${pct}%;background:${COLORS[i]}"></div></div>
+      </div>
+      <div class="tr-r"><div class="tr-usd" style="color:${COLORS[i]}">$${fmt(usd)}</div><div class="tr-won">${fmt(amt)}원</div></div>
+    </div>`;
+  }
+  html += `<hr><div class="srow tot"><span class="sl">예상 취득 달러</span><span class="sv" style="color:var(--accent)">$${fmt(Math.round(half/ma20))}</span></div>
+  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;">MA20 ${fmt(ma20)}원 기준</div>`;
+  document.getElementById('strat3').innerHTML = html;
+}
 
-function requestNotif(){if('Notification'in window){Notification.requestPermission().then(p=>alert(p==='granted'?'알림 허용됐습니다.':'알림이 거부됐습니다.'));}else alert('이 브라우저는 알림을 지원하지 않습니다.');}
-function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='exchange_tracker_'+today()+'.json';a.click();}
-function resetAll(){if(confirm('모든 데이터를 삭제하시겠습니까?')){localStorage.removeItem('exchTracker3');location.reload();}}
+function renderStratChart() {
+  const {budget} = state.settings;
+  const ma20 = calcMA20();
+  const half = budget*.5;
+  const r    = state.currentRate||ma20;
+  const n    = state.events.length;
+  const avgEventRate = Math.round(state.events.reduce((s,e)=>s+(r-e.drop),0)/n);
+  const usd2 = Math.round(half/avgEventRate);
+  const usd3 = Math.round(half/ma20);
+  const usdNow = Math.round(budget/r);
+  const total  = usd2+usd3;
+  const avgFinal = Math.round(budget/total);
+  const saving = Math.round((r-avgFinal)*total);
+  const pct = ((saving/(r*total))*100).toFixed(1);
 
-// INIT
+  const ctx = document.getElementById('stratChart').getContext('2d');
+  if (sChart) sChart.destroy();
+  sChart = new Chart(ctx,{
+    type:'bar',
+    data:{labels:['즉시 환전','2단계','3단계'],datasets:[{
+      data:[usdNow,usd2,usd3],
+      backgroundColor:['rgba(90,90,86,.4)','rgba(96,165,250,.6)','rgba(74,222,128,.6)'],
+      borderRadius:6,barThickness:28,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' $'+Math.round(c.raw).toLocaleString()}}},scales:{
+      x:{grid:{display:false},ticks:{color:'#5a5a56',font:{size:10,family:'DM Mono'}}},
+      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5a5a56',font:{size:10,family:'DM Mono'},callback:v=>'$'+Math.round(v/1000)+'k'}},
+    }},
+  });
+
+  document.getElementById('stratSummary').innerHTML = [
+    ['2단계 취득','$'+fmt(usd2),'var(--blue)'],
+    ['3단계 취득','$'+fmt(usd3),'var(--green)'],
+    ['합계 취득','$'+fmt(total),'var(--accent)'],
+    ['예상 평균 환율',fmt(avgFinal)+'원','var(--text)'],
+    ['즉시 대비 절약','+'+fmt(saving)+'원','var(--green)'],
+    ['절약률',pct+'%','var(--green)'],
+    ['즉시 환전 시','$'+fmt(usdNow),'var(--text3)'],
+  ].map(([l,v,c])=>`<div class="srow"><span class="sl">${l}</span><span class="sv" style="color:${c}">${v}</span></div>`).join('');
+}
+
+function addRecord() {
+  const rate = parseFloat(document.getElementById('rRate').value);
+  const amt  = parseFloat(document.getElementById('rAmt').value);
+  const date = document.getElementById('rDate').value || today();
+  const note = document.getElementById('rNote').value;
+  if (!rate||!amt) { alert('환율과 금액을 입력하세요.'); return; }
+  state.records.push({id:Date.now(), date, rate, amount:amt, note});
+  if (!state.rateHistory.find(r=>r.date===date)) {
+    state.rateHistory.push({date, rate});
+    state.rateHistory.sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  document.getElementById('rRate').value='';
+  document.getElementById('rAmt').value='';
+  document.getElementById('rNote').value='';
+  save(); render();
+}
+
+function deleteRecord(id) {
+  state.records = state.records.filter(r=>r.id!==id);
+  save(); render();
+}
+
+function renderRecords() {
+  const recs = [...state.records].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('recCnt').textContent = recs.length+'건';
+  document.getElementById('rDate').value = today();
+
+  if (!recs.length) {
+    document.getElementById('recTable').innerHTML = '<div class="empty">기록이 없습니다</div>';
+    document.getElementById('recSummary').innerHTML = '';
+    return;
+  }
+
+  const rows = recs.map(r=>`<tr>
+    <td class="td-date">${r.date}</td>
+    <td class="td-rate">${fmt(r.rate)}</td>
+    <td>${fmt(r.amount)}</td>
+    <td class="td-usd">$${fmt(Math.round(r.amount/r.rate))}</td>
+    <td style="color:var(--text3);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.note||'—'}</td>
+    <td><button class="btn-d" onclick="deleteRecord(${r.id})">✕</button></td>
+  </tr>`).join('');
+
+  document.getElementById('recTable').innerHTML = `<div class="tscroll"><table class="rtable">
+    <thead><tr><th>날짜</th><th>환율</th><th>금액(원)</th><th>달러</th><th>메모</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+
+  const tw  = state.records.reduce((s,r)=>s+r.amount,0);
+  const tu  = state.records.reduce((s,r)=>s+Math.round(r.amount/r.rate),0);
+  const avg = tu>0 ? Math.round(tw/tu) : 0;
+  const cr  = state.currentRate||0;
+  const gain = cr>0 ? Math.round(tu*cr)-tw : 0;
+
+  document.getElementById('recSummary').innerHTML = `<div class="card">
+    <div class="ctitle">실적 요약</div>
+    <div class="g2">
+      <div class="metric"><div class="mlabel">총 환전금액</div><div class="mval">${fmt(tw)}원</div></div>
+      <div class="metric"><div class="mlabel">취득 달러</div><div class="mval" style="color:var(--green)">$${fmt(tu)}</div></div>
+      <div class="metric"><div class="mlabel">평균 환율</div><div class="mval" style="color:var(--blue)">${fmt(avg)}원</div></div>
+      <div class="metric"><div class="mlabel">현재 평가손익</div><div class="mval" style="color:${cr>0?(gain>=0?'var(--green)':'var(--red)'):'var(--text3)'}">${cr>0?(gain>=0?'+':'')+fmt(gain)+'원':'—'}</div></div>
+    </div>
+  </div>`;
+}
+
+function renderSettings() {
+  const s = state.settings;
+  document.getElementById('settingsForm').innerHTML = `
+    ${[['총 환전 예산 (원)','budget',100000],['목표 달러 ($)','goal',100],['MA20 기준 환율 — fallback용 (원)','ma20',1],['2단계 알림 기준 (원 이하)','alert2',1],['3단계 알림 기준 (원 이하)','alert3',1]].map(([l,k,st])=>`
+      <div style="margin-bottom:.625rem;">
+        <label class="ilabel">${l}</label>
+        <input type="number" value="${s[k]}" step="${st}" id="set_${k}" style="font-size:15px;">
+      </div>`).join('')}
+    <div style="margin-bottom:.625rem;">
+      <label class="ilabel">분할 구간 수 (${s.tranches}구간)</label>
+      <input type="range" min="2" max="5" step="1" value="${s.tranches}" oninput="this.previousElementSibling.textContent='분할 구간 수 ('+this.value+'구간)';document.getElementById('set_tranches_val').textContent=this.value+'구간'" id="set_tranches">
+      <span id="set_tranches_val" style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;">${s.tranches}구간</span>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label class="ilabel">구간 간격 (${s.gap}원)</label>
+      <input type="range" min="10" max="50" step="5" value="${s.gap}" oninput="this.previousElementSibling.textContent='구간 간격 ('+this.value+'원)'" id="set_gap">
+    </div>
+    <button class="btn btn-p" style="width:100%;padding:10px;" onclick="saveSettings()">설정 저장</button>`;
+}
+
+function saveSettings() {
+  state.settings = {
+    budget:  parseFloat(document.getElementById('set_budget').value)||10000000,
+    goal:    parseFloat(document.getElementById('set_goal').value)||6600,
+    ma20:    parseFloat(document.getElementById('set_ma20').value)||1480,
+    alert2:  parseFloat(document.getElementById('set_alert2').value)||1500,
+    alert3:  parseFloat(document.getElementById('set_alert3').value)||1480,
+    tranches:parseInt(document.getElementById('set_tranches').value)||3,
+    gap:     parseInt(document.getElementById('set_gap').value)||20,
+  };
+  save(); render(); alert('저장됐습니다.');
+}
+
+function renderHistory() {
+  const hist = [...state.rateHistory].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
+  const sorted_asc = [...state.rateHistory].sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('histCnt').textContent = state.rateHistory.length+'일 데이터';
+
+  if (!hist.length) {
+    document.getElementById('histTable').innerHTML = '<div class="empty">데이터 없음 · API 갱신 버튼을 눌러주세요</div>';
+    return;
+  }
+
+  const rows = hist.map(r=>{
+    const idx = sorted_asc.findIndex(x=>x.date===r.date);
+    const win = sorted_asc.slice(Math.max(0,idx-19),idx+1);
+    const dayMA20 = win.length>=3 ? Math.round(win.reduce((s,x)=>s+x.rate,0)/win.length) : null;
+    const diff = dayMA20 ? r.rate-dayMA20 : null;
+    const diffColor = diff===null?'var(--text3)':diff>30?'var(--red)':diff>0?'var(--amber)':'var(--green)';
+    const srcClass = r.source==='api'?'td-src-api':'td-src-manual';
+    const srcLabel = r.source==='api'?'API':'직접';
+    return `<tr>
+      <td class="td-date">${r.date}</td>
+      <td style="color:var(--text);font-weight:500;">${fmt(r.rate)}원</td>
+      <td style="color:var(--blue);">${dayMA20?fmt(dayMA20)+'원':'—'}</td>
+      <td style="color:${diffColor}">${diff===null?'—':(diff>=0?'+':'')+fmt(diff)+'원'}</td>
+      <td class="${srcClass}">${srcLabel}</td>
+      <td><button class="btn-d" onclick="deleteHistory('${r.date}')">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('histTable').innerHTML = `<div class="tscroll"><table class="rtable">
+    <thead><tr><th>날짜</th><th>환율</th><th>당일 MA20</th><th>MA20 대비</th><th>출처</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+function deleteHistory(date) {
+  state.rateHistory = state.rateHistory.filter(r=>r.date!==date);
+  if (date===today()) { state.currentRate=null; state.lastFetch=null; }
+  save(); render();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'exchange_tracker_'+today()+'.json';
+  a.click();
+}
+
+function resetAll() {
+  if(confirm('모든 데이터를 삭제하시겠습니까?')) {
+    localStorage.removeItem(STORAGE_KEY); location.reload();
+  }
+}
+
+// ── Enter키 모달 ──────────────────────────────
+document.addEventListener('keydown', e=>{
+  if (e.key==='Enter' && document.getElementById('rateModal').style.display==='flex') applyManualRate();
+});
+
+// ── INIT ──────────────────────────────────────
 load();
 render();
-// 앱 시작: 오늘 환율 + 30일 히스토리 동시 로드
-(async () => {
+// 시작 시 API 자동 로드
+(async()=>{
   await autoFetchToday();
   await fetchHistoryForMA20();
 })();
-// 3시간마다 오늘 환율 자동 갱신
-setInterval(autoFetchToday, 3 * 60 * 60 * 1000);
-// 하루 1회 히스토리 갱신 (24시간)
-setInterval(fetchHistoryForMA20, 24 * 60 * 60 * 1000);
+// 3시간마다 오늘 환율 갱신
+setInterval(autoFetchToday, 3*60*60*1000);
+// 24시간마다 히스토리 갱신
+setInterval(fetchHistoryForMA20, 24*60*60*1000);
 </script>
 </body>
 </html>
